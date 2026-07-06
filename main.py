@@ -215,20 +215,30 @@ async def check_updates():
                     call_api("sendMessage", chat_id=chat_id, text=f"🌸 {mention_from} {action_text} {mention_to}", parse_mode="Markdown")
                     continue
 
-                # --- БЛОК АНАЛИТИКИ И СТАТИСТИКИ АКТИВНОСТИ ---
+                #                 # --- БЛОК АНАЛИТИКИ И СТАТИСТИКИ ---
                 if cmd in ["!stats", "/stats"] and chat_id != user_id:
                     timestamps = settings["activity"].get(group_id_str, [])
                     now = time.time()
                     
+                    # Если введено число (например !stats 4)
+                    if len(parts) > 1 and parts[1].isdigit():
+                        days = int(parts[1])
+                        count = sum(1 for t in timestamps if now - t <= (days * 86400))
+                        call_api("sendMessage", chat_id=chat_id, text=f"📊 **Статистика за последние {days} дней:**\n\nВсего сообщений: `{count}`", parse_mode="Markdown")
+                        continue
+
+                    # Если введено "hours" или "days" (графики)
                     if len(parts) > 1 and parts[1].lower() == "hours":
+                        # ... (твой существующий код для hours) ...
                         hours_count = {i: 0 for i in range(24)}
                         for t in timestamps: hours_count[datetime.fromtimestamp(t).hour] += 1
                         max_h = max(hours_count.values()) if hours_count.values() else 1
                         lines = ["📊 **Активность чата по часам суток:**"]
                         for h in range(24): lines.append(f"`{h:02d}:00` {make_bar(hours_count[h], max_h)} ({hours_count[h]})")
                         call_api("sendMessage", chat_id=chat_id, text="\n".join(lines), parse_mode="Markdown"); continue
-
+                    
                     if len(parts) > 1 and parts[1].lower() == "days":
+                        # ... (твой существующий код для дней недели) ...
                         days_names = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
                         days_count = {i: 0 for i in range(7)}
                         for t in timestamps: days_count[datetime.fromtimestamp(t).weekday()] += 1
@@ -237,21 +247,20 @@ async def check_updates():
                         for i in range(7): lines.append(f"`{days_names[i]}` {make_bar(days_count[i], max_d, 12)} ({days_count[i]})")
                         call_api("sendMessage", chat_id=chat_id, text="\n".join(lines), parse_mode="Markdown"); continue
 
-                    s_hour = sum(1 for t in timestamps if now - t <= 3600)
+                    # Общая базовая статистика (если аргументов нет)
                     s_day = sum(1 for t in timestamps if now - t <= 86400)
                     s_week = sum(1 for t in timestamps if now - t <= 604800)
                     s_month = sum(1 for t in timestamps if now - t <= 2592000)
-                    s_year = sum(1 for t in timestamps if now - t <= 31536000)
                     
                     stats_msg = (
-                        f"📊 **Аналитика активности чата** 📊\n\n"
-                        f"• За последний час: `{s_hour}` сообщ.\n"
-                        f"• За 24 часа: `{s_day}` сообщ.\n"
-                        f"• За неделю: `{s_week}` сообщ.\n"
-                        f"• За месяц: `{s_month}` сообщ.\n"
-                        f"• За год: `{s_year}` сообщ.\n"
-                        f"• Всего записано: `{len(timestamps)}` сообщ.\n\n"
-                        f"💡 `!stats hours` / `!stats days` — графики пиков."
+                        f"📊 **Аналитика чата**\n\n"
+                        f"• За 24 часа: `{s_day}`\n"
+                        f"• За неделю: `{s_week}`\n"
+                        f"• За месяц: `{s_month}`\n\n"
+                        f"💡 **Использование:**\n"
+                        f"`!stats 4` — стата за 4 дня\n"
+                        f"`!stats hours` — активность по часам\n"
+                        f"`!stats days` — активность по дням недели"
                     )
                     call_api("sendMessage", chat_id=chat_id, text=stats_msg, parse_mode="Markdown"); continue
 
