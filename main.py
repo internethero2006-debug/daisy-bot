@@ -69,7 +69,8 @@ async def check_updates():
             pass
         await asyncio.sleep(1)
 
-ifif __name__ == "__main__":
+    if __name__ == "__main__":
+
 
     threading.Thread(target=run_health_server, daemon=True).start()
     asyncio.run(check_updates())
