@@ -71,6 +71,5 @@ async def check_updates():
 
     if __name__ == "__main__":
 
-
     threading.Thread(target=run_health_server, daemon=True).start()
     asyncio.run(check_updates())
