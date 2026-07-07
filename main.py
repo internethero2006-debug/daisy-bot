@@ -348,3 +348,23 @@ async def check_updates():
 if __name__ == "__main__":
     threading.Thread(target=HTTPServer(('0.0.0.0', 10000), HealthCheckHandler).serve_forever, daemon=True).start()
     asyncio.run(check_updates())
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import threading
+
+# Этот класс отвечает UptimeRobot'у, что всё хорошо
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+def run_health_check():
+    # Render ВСЕГДА требует порт 10000 для бесплатных веб-сервисов
+    server = HTTPServer(('0.0.0.0', 10000), HealthCheckHandler)
+    server.serve_forever()
+
+# Запускаем веб-сервер в отдельном потоке, чтобы он не мешал боту
+threading.Thread(target=run_health_check, daemon=True).start()
+
+# ДАЛЬШЕ ТУТ ИДЕТ ТВОЙ СТАНДАРТНЫЙ ЗАПУСК БОТА (например, bot.infinity_polling())
